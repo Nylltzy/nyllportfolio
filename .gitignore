@@ -1,0 +1,8 @@
+# Local tooling and build copies (the site is served straight from the repo root)
+.freebuff/
+.cloud-attachments/
+dist/
+
+# Local env / secrets
+.env
+.env.*
