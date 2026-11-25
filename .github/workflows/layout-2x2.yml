@@ -1,0 +1,76 @@
+name: Reorganize work grid
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Two games and two websites
+        run: |
+          cat > /tmp/card.html <<'HTML'
+          <article class="slot reveal" data-tilt tabindex="0" aria-label="Website project slot 04, open">
+            <div class="slot__top">
+              <span class="slot__index">04</span>
+              <span class="slot__tag">Websites</span>
+            </div>
+
+            <div class="slot__frame" aria-hidden="true">
+              <div class="slot__browser">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="slot__grid"></div>
+              <span class="slot__ghost">04</span>
+              <span class="slot__hint">Slot open</span>
+            </div>
+
+            <div class="slot__body">
+              <h3 class="slot__title">Your second site</h3>
+              <p class="slot__text">A landing page, a portfolio or a client build — the page that shows how you handle type, spacing and a clear next step.</p>
+              <ul class="slot__meta">
+                <li>Platform</li><li>Your role</li><li>Year</li>
+              </ul>
+            </div>
+          </article>
+          HTML
+
+          python3 - <<'PY'
+          import pathlib
+
+          card = pathlib.Path('/tmp/card.html').read_text(encoding='utf-8').rstrip('\n')
+          p = pathlib.Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          def sub(old, new):
+              global s
+              assert s.count(old) == 1, 'anchor not unique: ' + old[:40]
+              s = s.replace(old, new)
+
+          key = "aria-label=\"SOL'N landing page"
+          start = s.index(key)
+          end = s.index('</article>', start) + len('</article>')
+          s = s[:end] + '\n\n' + card + s[end:]
+
+          sub('class="slot slot--wide slot--filled', 'class="slot slot--filled')
+          sub('slot__frame slot__frame--wide slot__frame--filled', 'slot__frame slot__frame--filled')
+          sub('02 — Game development<br>01 — Websites', '02 — Game development<br>02 — Websites')
+          sub('One shipped,<br>two still open.', 'One shipped,<br>three still open.')
+
+          p.write_text(s, encoding='utf-8')
+          print('articles:', s.count('<article'))
+          PY
+
+      - name: Commit and push
+        run: |
+          git diff --stat
+          git config user.name "Nylltzy"
+          git config user.email "152249429+Nylltzy@users.noreply.github.com"
+          git add index.html
+          git commit -m "Lay the work section out as two games and two websites"
+          git push
